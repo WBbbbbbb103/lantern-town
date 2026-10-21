@@ -1,9 +1,11 @@
 # 灯町 · Lantern Town
 
+[在线体验：进入灯町](https://wbbbbbbb103.github.io/lantern-town/)
+
 > 一座放在桌面上的 3D 微缩小镇。  
 > 白天有人出门，傍晚窗灯次第亮起，下雨时，大家都往屋檐下躲。
 
-![灯町的黄昏](screenshots/dusk.jpg)
+[![灯町的黄昏](screenshots/dusk.jpg)](https://wbbbbbbb103.github.io/lantern-town/)
 
 **灯町**是一份完全运行在浏览器里的互动微缩模型：没有外部贴图、没有构建步骤、没有后端。所有场景、角色、声音和 Three.js 都收在一个 `index.html` 里。双击即可离线打开，也可以直接发布到 GitHub Pages。
 
