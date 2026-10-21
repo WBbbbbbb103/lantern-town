@@ -10,7 +10,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:site_name" content="灯町 · Lantern Town">
 <meta property="og:title" content="灯町 · Lantern Town — 桌面上的小镇">
-<meta property="og:description" content="一座会自己生活 3D 微缩小镇：白天有人出门，傍晚窗灯次第亮起，下雨时行人会躲到屋檐下。">
+<meta property="og:description" content="一座会自己生活的 3D 微缩小镇：白天有人出门，傍晚窗灯次第亮起，下雨时行人会躲到屋檐下。">
 <meta property="og:image" content="screenshots/dusk.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="灯町 · Lantern Town">
@@ -538,7 +538,7 @@
       <div>
         <h3>每样东西都有一点脾气</h3>
         <p>点击喷泉、钟楼、面包房、花房、路灯、汽车、树、行人和窗子，会看到它们的小反应。把鼠标停在一处，它会告诉你那是什么。</p>
-        <div class="help-react"><span>喷泉许愿</span><span>钟楼打钟</span><span>和猫打招呼</span><span>点窗灯</span><span>向行人问好</span><span>按一声车喇叭</span><span>看鸭子</span><span>闻面包香</span></div>
+        <div class="help-react"><span>喷泉许愿</span><span>钟楼打钟</span><span>和猫打招呼</span><span>点窗灯</span><span>向行人问好</span><span>请刘应豪拍照</span><span>按一声车喇叭</span><span>看鸭子</span><span>闻面包香</span></div>
       </div>
     </div>
 
@@ -5327,6 +5327,23 @@ function buildPerson(cfg) {
   }
   torso.castShadow = true;
   g.add(torso);
+  if (cfg.openShirt) {
+    const shirtMat = stdMat(cfg.shirtColor || 0xf2eee5, { roughness: .92 });
+    const tee = new THREE.Mesh(new THREE.BoxGeometry(.138, .235, .028), shirtMat);
+    tee.position.set(0, .33, .102);
+    g.add(tee);
+    // 敞开的奶油色外套：两条门襟
+    for (const side of [-1, 1]) {
+      const lapel = new THREE.Mesh(new THREE.BoxGeometry(.034, .24, .026), coatMat);
+      lapel.position.set(side * .068, .335, .114);
+      lapel.rotation.z = side * .09;
+      g.add(lapel);
+    }
+    const collar = new THREE.Mesh(new THREE.BoxGeometry(.17, .025, .06), coatMat);
+    collar.position.set(0, .445, .035);
+    collar.rotation.x = -.08;
+    g.add(collar);
+  }
   if (style === 'apron') {
     const apron = new THREE.Mesh(new THREE.BoxGeometry(.16, .22, .018), stdMat(cfg.apronColor || 0xe7d8be, { roughness: .95 }));
     apron.position.set(0, .3, .107);
@@ -5380,11 +5397,47 @@ function buildPerson(cfg) {
     bun.position.set(0, .585, -.045);
     g.add(bun);
   }
+  if (cfg.wavyHair) {
+    // 几缕微卷的深色头发，向一侧梳开
+    const tufts = [
+      [.022, .582, .061, .058, .028, .026, -.10, .18, .12],
+      [-.038, .576, .052, .048, .024, .025, -.16, -.12, -.16],
+      [.066, .552, .018, .027, .048, .032, .05, .22, .20],
+      [-.062, .551, .012, .028, .043, .030, -.04, -.18, -.22],
+      [.006, .558, -.067, .056, .045, .026, .18, 0, .08],
+      [-.010, .589, .022, .036, .027, .038, .02, .4, -.15]
+    ];
+    for (const [x, y, z, sx, sy, sz, rx, ry, rz] of tufts) {
+      const tuft = new THREE.Mesh(new THREE.SphereGeometry(1, 6, 5), hairMat);
+      tuft.scale.set(sx, sy, sz);
+      tuft.position.set(x, y, z);
+      tuft.rotation.set(rx, ry, rz);
+      g.add(tuft);
+    }
+  }
   // 脸
   for (const sx of [-1, 1]) {
     const eye = new THREE.Mesh(new THREE.SphereGeometry(.0105, 5, 4), stdMat(0x262621, { roughness: .5 }));
     eye.position.set(sx * .025, .519, .064);
     g.add(eye);
+  }
+  // 细框眼镜
+  if (cfg.glasses) {
+    const frameMat = stdMat(0x655b4c, { roughness: .42, metalness: .35 });
+    for (const side of [-1, 1]) {
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(.0178, .0026, 4, 14), frameMat);
+      rim.position.set(side * .026, .518, .074);
+      g.add(rim);
+      const temple = cylinderBetween(
+        new THREE.Vector3(side * .043, .52, .065),
+        new THREE.Vector3(side * .071, .512, .002),
+        .0019, frameMat, 4
+      );
+      g.add(temple);
+    }
+    const bridge = new THREE.Mesh(new THREE.BoxGeometry(.022, .0032, .005), frameMat);
+    bridge.position.set(0, .522, .075);
+    g.add(bridge);
   }
   // 帽子
   if (cfg.hat === 'straw') {
@@ -5435,6 +5488,32 @@ function buildPerson(cfg) {
     book.position.set(.13, .27, .06);
     book.rotation.z = .2;
     g.add(book);
+  }
+  if (cfg.phone) {
+    const phone = new THREE.Group();
+    phone.position.set(0, -.195, .075);
+    phone.rotation.set(-.55, .06, .1);
+    const bodyPhone = new THREE.Mesh(
+      new THREE.BoxGeometry(.072, .12, .014),
+      stdMat(0x26272a, { roughness: .32, metalness: .3 })
+    );
+    phone.add(bodyPhone);
+    const screen = new THREE.Mesh(
+      new THREE.PlaneGeometry(.055, .095),
+      new THREE.MeshBasicMaterial({ color: 0x7d9896, toneMapped: false })
+    );
+    screen.position.z = .008;
+    phone.add(screen);
+    const phoneGlow = new THREE.Mesh(
+      new THREE.PlaneGeometry(.15, .20),
+      new THREE.MeshBasicMaterial({
+        color: 0x9dbebc, transparent: true, opacity: .035, depthWrite: false,
+        blending: THREE.AdditiveBlending, toneMapped: false
+      })
+    );
+    phoneGlow.position.z = .011;
+    phone.add(phoneGlow);
+    armR.add(phone);
   }
   if (cfg.cane) {
     const cane = new THREE.Mesh(new THREE.CylinderGeometry(.012, .016, .52, 5), MAT.woodLight);
@@ -5783,6 +5862,23 @@ buildPerson({
   skin: 2, hair: 5, scarf: 0x8f6c5a, balloons: true, activeFrom: 8.0, activeTo: 20.8,
   lines: ['挑一个吧，今天的天色配橙色很好看。', '气球想去哪里，我从来不拦着。', '从前我给孙子买过一只，后来它飞到了云上。']
 });
+// 新来的住客刘应豪：深色微卷发、细框眼镜、白 T 恤和奶油色衬衫，口头禅是“神了”
+buildPerson({
+  name: '刘应豪', role: '新来的住客', stationary: { x: .62, z: 3.08, rot: .08 },
+  speed: 0, scale: 1.04,
+  coat: 0xcbb58f, shirtColor: 0xf7f4ec, openShirt: true,
+  style: 'coat', pants: 1,
+  skin: 0, hair: 4, glasses: true, wavyHair: true, phone: true,
+  shoeMat: stdMat(0xded8cb, { roughness: .78 }),
+  hasUmbrella: true, umbrella: 0x6e7b72,
+  activeFrom: 7.5, activeTo: 25, nightOwl: true,
+  lines: [
+    '神了，刚搬来三天，已经会听钟声认时间了。',
+    '手机里存了十七张猫，还有一张晚霞。神了。',
+    '神了，这条街的屋檐，照片里根本拍不出来。',
+    '我就出来走一圈，神了，在喷泉边站了半小时。'
+  ]
+});
 
 // 固定人物的初始位置，避免贴着物台穿模
 {
@@ -5813,6 +5909,12 @@ buildPerson({
   if (balloonMan) {
     balloonMan.armR.rotation.x = -.36;
     balloonMan.armR.rotation.z = -.28;
+  }
+  const newcomer = people.find(p => p.name === '刘应豪');
+  if (newcomer) {
+    newcomer.armR.rotation.x = -1.18;
+    newcomer.armR.rotation.z = -.22;
+    newcomer.armL.rotation.x = -.12;
   }
 }
 
@@ -5867,6 +5969,10 @@ function personIdlePose(p, dt, t) {
     } else if (p.name === '气球爷爷') {
       p.armR.rotation.x = lerp(p.armR.rotation.x, -.36, dt * 6);
       p.armR.rotation.z = lerp(p.armR.rotation.z, -.28, dt * 6);
+    } else if (p.name === '刘应豪') {
+      p.armR.rotation.x = lerp(p.armR.rotation.x, -1.18, dt * 5);
+      p.armR.rotation.z = lerp(p.armR.rotation.z, -.22, dt * 5);
+      p.armL.rotation.x = lerp(p.armL.rotation.x, -.12, dt * 5);
     }
   }
   p.group.position.y = p.baseY + breathe * .004;
@@ -5911,7 +6017,7 @@ function updatePerson(p, dt, t) {
   if (WEATHER.rain > .15 && !p.rainMode && p.group.visible && !['home', 'asleep'].includes(p.state)) {
     p.rainMode = true;
     if (p.stationary) {
-      p.usingUmbrella = p.name === '小鹿' || p.name === '气球爷爷';
+      p.usingUmbrella = p.name === '小鹿' || p.name === '气球爷爷' || p.name === '刘应豪';
     } else if (p.hasUmbrella || !claimShelter(p)) {
       p.usingUmbrella = true;
       p.state = p.state === 'walk' || p.state === 'pause' ? 'walk' : p.state;
@@ -5990,6 +6096,7 @@ function updatePerson(p, dt, t) {
   }
   if (p.stationary) {
     personIdlePose(p, dt, t);
+    updateUmbrella(p, dt);
     if (p.wave > 0) { p.wave -= dt; p.armR.rotation.z = .07 + Math.sin(t * 14) * .45 - .5; }
     return;
   }
@@ -6730,6 +6837,7 @@ function setCameraPreset(name) {
     cafe: { theta: -.42, phi: 1.08, radius: 9.2, target: new THREE.Vector3(10.4, 1.2, 2.9) },
     clock: { theta: .4, phi: 1.08, radius: 12, target: new THREE.Vector3(2.2, 4.0, -7.1) },
     people: { theta: .45, phi: 1.18, radius: 3.4, target: new THREE.Vector3(2.2, .55, 2.6) },
+    newcomer: { theta: .48, phi: 1.16, radius: 3.2, target: new THREE.Vector3(.62, .55, 3.08) },
     pond: { theta: .46, phi: 1.05, radius: 12.5, target: new THREE.Vector3(-8.8, .45, 6.3) },
     cafe: { theta: -1.2, phi: 1.06, radius: 12, target: new THREE.Vector3(9.2, 1.2, 1.4) },
     north: { theta: .22, phi: 1.11, radius: 17, target: new THREE.Vector3(-1.6, 1.3, -4.4) }
@@ -7027,6 +7135,28 @@ function handleInteraction(hit) {
     }
     case 'person': {
       const p = data.person;
+      if (p.name === '刘应豪') {
+        p.pause = Math.max(p.pause, 1.2);
+        const line = pick([
+          '神了。你刚好站在光里。',
+          '这里的黄昏根本不用滤镜。神了。',
+          '神了，我拍到了喷泉，也拍到了你。',
+          '这张得留起来。神了。'
+        ]);
+        showBubble(p.group, data, line, {
+          who: p.name, sub: 'SNAPSHOT', duration: 5.2
+        });
+        const pos = p.group.position.clone();
+        pos.y += .48;
+        pos.x += .16;
+        spawnParticles({
+          pos, map: TEX_GLOW, color: 0xfff3d8, count: 8,
+          spread: .12, spreadY: .08, speed: .22, up: .25,
+          size: .23, life: .55, gravity: 0
+        });
+        Audio.playShutter();
+        break;
+      }
       wavePerson(p);
       const lines = personLines(p);
       const line = lines[Math.floor(Math.random() * lines.length)];
@@ -8130,6 +8260,25 @@ const Audio = {
       src.connect(f); f.connect(g); this.output(g);
       src.start(t); src.stop(t + .08);
     }
+  },
+  playShutter() {
+    if (!this.ctx || this.muted) return;
+    const t = this.ctx.currentTime;
+    // 一声轻快的机械咔嗒
+    const o = this.ctx.createOscillator(), og = this.ctx.createGain();
+    o.type = 'square'; o.frequency.setValueAtTime(1800, t);
+    o.frequency.exponentialRampToValueAtTime(420, t + .06);
+    og.gain.setValueAtTime(.012, t);
+    og.gain.exponentialRampToValueAtTime(.0002, t + .08);
+    o.connect(og); this.output(og); o.start(t); o.stop(t + .09);
+    // 快门帘的一小口气
+    const src = this.ctx.createBufferSource(); src.buffer = this.noiseBuffer;
+    const g = this.ctx.createGain(); const f = this.ctx.createBiquadFilter();
+    f.type = 'highpass'; f.frequency.value = 1900;
+    g.gain.setValueAtTime(.035, t + .015);
+    g.gain.exponentialRampToValueAtTime(.0002, t + .14);
+    src.connect(f); f.connect(g); this.output(g);
+    src.start(t + .015); src.stop(t + .16);
   },
   playHorn() {
     if (!this.ctx || this.muted) return;
